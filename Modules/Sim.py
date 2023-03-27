@@ -33,9 +33,12 @@ def simulate(env):
             P = p0*np.exp((mu - 0.5*sigma**2)*t + sigma*W)
             return P
 
-        arb = a(generateGBM(T, mu, sigma, p0, dt, env), CFMM)
+        GBM = generateGBM(T, mu, sigma, p0, dt, env)
+        arb = a(GBM, CFMM)
         arb.arbitrage()
-        print(arb.xFees)
+        arb.typeCheck()
+        yield env.timeout(1)
+        
 
 env.process(simulate(env))
 env.run(until=N)

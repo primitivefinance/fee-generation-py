@@ -39,11 +39,11 @@ class RMM01:
 
     def arbAmount(self, s):
         if s < self.marginalPrice():
-            deltain = (norm.cdf(-np.log(s/self.strike)/(self.iv*np.sqrt(self.tau)) - 0.5*self.iv*self.tau) - self.x)/(1 - self.fee)
+            deltain = (1 - norm.cdf(np.log(s/self.strike)/(self.iv*np.sqrt(self.tau)) + 0.5*self.iv*np.sqrt(self.tau)) - self.x)/(1 - self.fee)
             return deltain
 
         elif s > self.marginalPrice():
-            x_temp = norm.cdf(-np.log(s/self.strike)/(self.iv*np.sqrt(self.tau)) - 0.5*self.iv*self.tau)
+            x_temp = 1 - norm.cdf(np.log(s/self.strike)/(self.iv*np.sqrt(self.tau)) + 0.5*self.iv*np.sqrt(self.tau))
             deltain = (self.strike*norm.cdf(norm.ppf(1 - x_temp) - self.iv*np.sqrt(self.tau)) + self.k - self.y)/(1 - self.fee)
             return deltain
 
