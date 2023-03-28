@@ -30,7 +30,6 @@ def generateGBM(T, mu, sigma, p0, dt, env):
             return P
 
 def simulate(env):
-    Fees = []
     CFMM = RMM01(p0, K, v, T, dt, gamma, env)
     
     while True:
@@ -39,16 +38,14 @@ def simulate(env):
         arb = a(GBM, CFMM)
         arb.arbitrage()
         Fees.append(arb.Fees)
-        print("Marginal Pool Price:", CFMM.marginalPrice())
-        print("GBM Reference Price:", GBM)
-        print("Difference:", CFMM.marginalPrice() - GBM)
-        print("x Reserve:", CFMM.x)
-        h = sum(Fees)
-        print(h)
         yield env.timeout(1)
 
+FeeIncome = []        
+for i in range (0, 100):
+    Fees = []
+    env.process(simulate(env))
     
-        
-
-env.process(simulate(env))
 env.run(until=N)
+FeeIncome.append(sum(Fees))
+
+print(sum(FeeIncome)/100)

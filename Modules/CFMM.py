@@ -38,7 +38,6 @@ class RMM01:
                 self.x += deltain
                 self.y -= deltaout
                 feeEarned = self.fee * deltain
-                print("Swapped X for Y")
                 return deltaout, feeEarned
 
 
@@ -57,7 +56,6 @@ class RMM01:
                 self.y += deltain
                 self.x -= deltaout
                 feeEarned = self.fee * deltain
-                print("Swapped Y for X")
                 return deltaout, feeEarned
 
     def arbAmount(self, s):
