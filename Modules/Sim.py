@@ -36,7 +36,7 @@ def simulate(env):
         GBM = generateGBM(T, mu, sigma, p0, dt, env)
         arb = a(GBM, CFMM)
         arb.arbitrage()
-        arb.typeCheck()
+        print(CFMM.marginalPrice())
         yield env.timeout(1)
         
 
