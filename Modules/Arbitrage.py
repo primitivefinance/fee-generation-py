@@ -6,27 +6,22 @@ class referenceArbitrage:
     def __init__(self, priceProcess, CFMM):
         self.CFMM = CFMM
         self.p = priceProcess
-        self.xFees = []
-        self.yFees = []
-        self.Volume = []
+        self.Fees = 0
+        self.Volume = 0
 
     def arbitrage(self):
 
-        if self.p - 1e-8 > self.CFMM.marginalPrice():
+        if self.p - self.CFMM.marginalPrice() > 1e-8:
             
-            FeeEarned = self.CFMM.swapYforX(self.CFMM.arbAmount(self.p))[1]
-            SwapVolume = self.CFMM.swapYforX(self.CFMM.arbAmount(self.p))[0]*self.p
-            self.yFees.append(FeeEarned)
-            self.Volume.append(SwapVolume)
+            Swap = self.CFMM.swapYforX(self.CFMM.arbAmount(self.p))
+            self.Fees = Swap[1]
+            self.Volume = Swap[0]*self.p
 
-        elif self.p + 1e-8 < self.CFMM.marginalPrice():
+        elif self.CFMM.marginalPrice() - self.p > 1e-8:
 
-            FeeEarned = self.CFMM.swapXforY(self.CFMM.arbAmount(self.p))[1]
-            SwapVolume = self.CFMM.swapXforY(self.CFMM.arbAmount(self.p))[0]
-            self.xFees.append(FeeEarned)
-            self.Volume.append(SwapVolume)
+            Swap = self.CFMM.swapXforY(self.CFMM.arbAmount(self.p))
+            self.Fees = Swap[1]*self.p
+            self.Volume = Swap[0]
         
         else:
             pass
-    def typeCheck(self):    
-        print(self.CFMM.marginalPrice())

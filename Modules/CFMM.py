@@ -25,25 +25,40 @@ class RMM01:
 
     def swapXforY(self, deltain):
         tau = self.T - self.dt * self.env.now
-        assert 0 <= deltain < 1 - self.x
-        x_temp = self.x + (1 - self.fee) * deltain
-        deltaout = self.y - self.TradingFunction() - self.strike*norm.cdf(norm.ppf(1 - x_temp) - self.iv * np.sqrt(tau))
-        assert deltaout >= 0
-        self.x += deltain
-        self.y -= deltaout
-        feeEarned = self.fee * deltain
-        return deltaout, feeEarned
+        if 1 - (deltain + self.x) < 1e-8:
+            deltaout = 0
+            return deltaout, 0
+        else:
+            x_temp = self.x + (1 - self.fee) * deltain
+            deltaout = self.y - self.TradingFunction() - self.strike*norm.cdf(norm.ppf(1 - x_temp) - self.iv * np.sqrt(tau))
+            if deltaout < 1e-8:
+                deltaout = 0
+                return deltaout, 0
+            else:
+                self.x += deltain
+                self.y -= deltaout
+                feeEarned = self.fee * deltain
+                print("Swapped X for Y")
+                return deltaout, feeEarned
+
 
     def swapYforX(self, deltain):
         tau = self.T - self.dt * self.env.now
-        assert 0 <= deltain < self.strike - self.y + self.TradingFunction()
-        y_temp = self.y + (1 - self.fee) * deltain
-        deltaout = self.x - 1 + norm.cdf(norm.ppf((y_temp - self.TradingFunction())/self.strike) + self.iv * np.sqrt(tau))
-        assert deltaout >= 0
-        self.y += deltain
-        self.x -= deltaout
-        feeEarned = self.fee * deltain
-        return deltaout, feeEarned
+        if self.strike + self.TradingFunction() - (deltain + self.y) < 1e-8:
+            deltaout = 0
+            return deltaout, 0
+        else:
+            y_temp = self.y + (1 - self.fee) * deltain
+            deltaout = self.x - 1 + norm.cdf(norm.ppf((y_temp - self.TradingFunction())/self.strike) + self.iv * np.sqrt(tau))
+            if deltaout < 1e-8:
+                deltaout = 0
+                return deltaout, 0
+            else:
+                self.y += deltain
+                self.x -= deltaout
+                feeEarned = self.fee * deltain
+                print("Swapped Y for X")
+                return deltaout, feeEarned
 
     def arbAmount(self, s):
         if s < self.marginalPrice():

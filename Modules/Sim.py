@@ -6,7 +6,7 @@ import simpy
 
 # Config
 
-K = 2000
+K = 1500
 p0 = 1500
 v = 0.7
 T = 7/365
@@ -21,11 +21,7 @@ gamma = 0.997
 
 env = simpy.Environment()
 
-def simulate(env):
-    while True:
-        CFMM = RMM01(p0, K, v, T, dt, gamma, env)
-
-        def generateGBM(T, mu, sigma, p0, dt, env):
+def generateGBM(T, mu, sigma, p0, dt, env):
             N = round(T/dt)
             t = dt/T*env.now
             dW = np.random.standard_normal(size=N)
@@ -33,11 +29,25 @@ def simulate(env):
             P = p0*np.exp((mu - 0.5*sigma**2)*t + sigma*W)
             return P
 
+def simulate(env):
+    Fees = []
+    CFMM = RMM01(p0, K, v, T, dt, gamma, env)
+    
+    while True:
+
         GBM = generateGBM(T, mu, sigma, p0, dt, env)
         arb = a(GBM, CFMM)
         arb.arbitrage()
-        print(CFMM.marginalPrice())
+        Fees.append(arb.Fees)
+        print("Marginal Pool Price:", CFMM.marginalPrice())
+        print("GBM Reference Price:", GBM)
+        print("Difference:", CFMM.marginalPrice() - GBM)
+        print("x Reserve:", CFMM.x)
+        h = sum(Fees)
+        print(h)
         yield env.timeout(1)
+
+    
         
 
 env.process(simulate(env))
