@@ -2,63 +2,90 @@ import matplotlib.pyplot as plt
 import numpy as np
 from Arbitrage import referenceArbitrage as a
 from CFMM import RMM01
+from CFMM import StableVolatility
+import PriceGen as price
 import simpy
 
 # Config Params
 
-K = 1500            # Strike of RMM-01 Pool
+K = 1               # Strike of RMM-01 Pool
 p0 = 1500           # Initial Pool and GBM Price
-v = 0.7             # Implied Volatility RMM-01 Parameter
+v = 1.1             # Implied Volatility RMM-01 Parameter
 T = 7/365           # Pool Duration in Years
 dt = 0.015/365      # Time-Step Size in Years
 N = round(T/dt)     # Number of Time-Steps
 gamma = 0.997       # Fee Regime on CFMM
 
-mu = 0.0                            # GBM Drift Parameter
-sigma = np.linspace(0.01, 2, 50)    # GBM Realized Volatility Parameter
-             
+mu = 0.0                        # GBM Drift Parameter
+sigma = np.linspace(0.01,3,100) # GBM Realized Volatility Parameter
+
+P0 = 1              # OU start price
+mean = 1            # OU mean price
+theta = 2/365       # OU mean reversion time
+
 M = 10              # Number of Simulation Runs per RV parameter
 
-# Simulation Process
+# Simulation Processes
 
-def generateGBM(T, mu, sigma, p0, dt, env):
-            N = round(T/dt)
-            t = dt/T*env.now
-            dW = np.random.standard_normal(size=N)
-            W = np.cumsum(dW)[env.now]*np.sqrt(dt)
-            P = p0*np.exp((mu - 0.5*sigma**2)*t + sigma*W)
-            return P
-
-def simulate(env, i):
-    CFMM = RMM01(p0, K, v, T, dt, gamma, env)
+def simulateGBM(env, i):
+    CFMM = RMM01(p0, K, sigma[i], T, dt, gamma, env)
     
     while True:
 
-        GBM = generateGBM(T, mu, sigma[i], p0, dt, env)
+        GBM = price.generateGBM(T, mu, v, p0, dt, env)
         arb = a(GBM, CFMM)
         arb.arbitrage()
         Fees.append(arb.Fees)
         yield env.timeout(1)
 
-# Loop simulation for each sigma
+def simulateOU(env, i):
+    CFMM = StableVolatility(P0, K, sigma[i], T, gamma, env)
 
-array = []
-for j in range (0, 50):
+    while True:
+
+        OU = price.generateOU(T, mean, v, P0, dt, theta, env)
+        arb = a(OU, CFMM)
+        arb.arbitrage()
+        Fees.append(arb.Fees)
+        yield env.timeout(1)
+
+# GBM Based RMM01 simulation
+
+def simulationEngineGBM():
+    array = []
+    for j in range (0, 50):
       
-    FeeIncome = []        
-    for i in range (0, M):
-        Fees = []
-        env = simpy.Environment()
-        env.process(simulate(env, j))
-        env.run(until=N)
+        FeeIncome = []        
+        for i in range (0, M):
+            Fees = []
+            env = simpy.Environment()
+            env.process(simulateGBM(env, j))
+            env.run(until=N)
     
-        FeeIncome.append(sum(Fees))
-    array.append(sum(FeeIncome)/M)
+            FeeIncome.append(sum(Fees))
+        array.append(sum(FeeIncome)/M)
+    return array
 
-# Plotting Realized Volatility Parameter vs. Average Fees Generated over M GBMs
+# OU Based Stable Volatility simulation
 
-plt.plot(sigma, array, 'g-')
-plt.xlabel("Realized Volatility", fontsize=12)
+def simulationEngineOU():
+    array2 = []
+    for j in range (0, 100):
+        FeeIncome = []
+        for i in range (0, M):
+            Fees = []
+            env = simpy.Environment()
+            env.process(simulateOU(env, j))
+            env.run(until=N)
+
+            FeeIncome.append(sum(Fees))
+        array2.append(sum(FeeIncome)/M)
+    return array2
+
+# Plotting Implied Volatility Parameter vs. Average Fees Generated over M OUs of static RV
+
+plt.plot(sigma, simulationEngineOU(), 'g-')
+plt.xlabel("Pool Implied Volatility", fontsize=12)
 plt.ylabel("Expected Fees", fontsize=12)
-plt.title("Strike 1500, Initial Price 1500, IV = 0.7, T = 1 week, fee = 3%")
+plt.title("Strike 1, Initial Price 2, RV = 0.7, T = 1 week, fee = 3%")
 plt.show()
