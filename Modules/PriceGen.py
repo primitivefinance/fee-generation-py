@@ -23,16 +23,26 @@ def generateOU(T, mean, sigma, p0, dt, theta, env):
       
 # Backtesting Data
 
-def queryUniswapV3(query):
+import time
+
+def queryUniswapV3(query, max_retries=5, initial_wait_time=1):
     url = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3'
     headers = {'Content-Type': 'application/json'}
-    response = requests.post(url, headers=headers, json={'query': query})
-    response_json = response.json()
+    
+    for retry in range(max_retries):
+        try:
+            response = requests.post(url, headers=headers, json={'query': query})
+            response_json = response.json()
+            
+            if 'errors' in response_json:
+                raise ValueError(f"Error in query response: {response_json['errors']}")
 
-    if 'errors' in response_json:
-        raise ValueError(f"Error in query response: {response_json['errors']}")
-
-    return response_json['data']
+            return response_json['data']
+        except requests.exceptions.ConnectionError as e:
+            if retry == max_retries - 1:
+                raise e
+            wait_time = initial_wait_time * (2 ** retry)
+            time.sleep(wait_time)
 
 def fetch_all_hourly_data(pool_id, start_timestamp, end_timestamp):
     all_data = []

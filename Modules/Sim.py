@@ -124,5 +124,5 @@ elif run_Backtest:
 
 plt.xlabel("Pool Implied Volatility", fontsize=12)
 plt.ylabel("Expected Fees", fontsize=12)
-plt.title("Strike 1, Initial Price 2, RV = 0.7, T = 1 week, fee = 3%")
+plt.title("Strike 1, Initial Price 1, RV = 2.5% annualized, T = 0.1 years, fee = 0.3%, Backtest USDC/USDT")
 plt.show()
