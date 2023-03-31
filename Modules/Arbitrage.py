@@ -11,13 +11,13 @@ class referenceArbitrage:
 
     def arbitrage(self):
 
-        if self.p - self.CFMM.marginalPrice() > 1e-8:
+        if self.p - self.CFMM.marginalPrice() > 1e-9:
             
             Swap = self.CFMM.swapYforX(self.CFMM.arbAmount(self.p))
             self.Fees = Swap[1]
             self.Volume = Swap[0]*self.p
 
-        elif self.CFMM.marginalPrice() - self.p > 1e-8:
+        elif self.CFMM.marginalPrice() - self.p > 1e-9:
 
             Swap = self.CFMM.swapXforY(self.CFMM.arbAmount(self.p))
             self.Fees = Swap[1]*self.p

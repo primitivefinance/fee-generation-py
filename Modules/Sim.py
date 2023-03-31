@@ -23,7 +23,7 @@ P0 = 1              # OU start price
 mean = 1            # OU mean price
 theta = 2/365       # OU mean reversion time
 
-M = 10              # Number of Simulation Runs per RV parameter
+M = 1              # Number of Simulation Runs per RV parameter
 
 # Simulation Processes
 
@@ -51,40 +51,35 @@ def simulateOU(env, i):
 
 # GBM Based RMM01 simulation
 
-def simulationEngineGBM():
-    array = []
-    for j in range (0, 50):
-      
-        FeeIncome = []        
-        for i in range (0, M):
-            Fees = []
-            env = simpy.Environment()
-            env.process(simulateGBM(env, j))
-            env.run(until=N)
+array = []
+for j in range (0, 50):     
+    FeeIncome = []        
+    for i in range (0, M):
+        Fees = []
+        env = simpy.Environment()
+        env.process(simulateGBM(env, j))
+        env.run(until=N)
     
-            FeeIncome.append(sum(Fees))
-        array.append(sum(FeeIncome)/M)
-    return array
+        FeeIncome.append(sum(Fees))
+    array.append(sum(FeeIncome)/M)
 
 # OU Based Stable Volatility simulation
 
-def simulationEngineOU():
-    array2 = []
-    for j in range (0, 100):
-        FeeIncome = []
-        for i in range (0, M):
-            Fees = []
-            env = simpy.Environment()
-            env.process(simulateOU(env, j))
-            env.run(until=N)
+array2 = []
+for j in range (0, 100):
+    FeeIncome = []
+    for i in range (0, M):
+        Fees = []
+        env = simpy.Environment()
+        env.process(simulateOU(env, j))
+        env.run(until=N)
 
-            FeeIncome.append(sum(Fees))
-        array2.append(sum(FeeIncome)/M)
-    return array2
+        FeeIncome.append(sum(Fees))
+    array2.append(sum(FeeIncome)/M)
 
 # Plotting Implied Volatility Parameter vs. Average Fees Generated over M OUs of static RV
 
-plt.plot(sigma, simulationEngineOU(), 'g-')
+plt.plot(sigma, array2, 'g-')
 plt.xlabel("Pool Implied Volatility", fontsize=12)
 plt.ylabel("Expected Fees", fontsize=12)
 plt.title("Strike 1, Initial Price 2, RV = 0.7, T = 1 week, fee = 3%")
