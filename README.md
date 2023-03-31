@@ -14,4 +14,4 @@ Consists of 4 modules:
 - ``Modules/PriceGen.py`` contains price generation logic
 - ``Modules/Sim.py`` contains simulation execution logic
 
-Package dependencies include: ``numpy``, ``simpy``, ``scipy``, ``matplotlib.pyplot`` 
+Package dependencies include: ``numpy``, ``simpy``, ``scipy``, ``matplotlib.pyplot``, ``requests``, ``time``
