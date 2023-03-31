@@ -1,9 +1,8 @@
 # fee-generation-py
 
-Calculates average fees earned over $N$ number of GBM or Ornstein-Uhlenbeck price runs $P_t$, for a given RMM01 or StableVol pool configuration $(K, \sigma, \tau)$. Allows us to see the rate of fee growth relative to volatility. Observed values based solely on required arbitrage volume.
+Calculates average fees earned over $N$ number of random price path runs $P_t$ or backtests performance against USDC/USDT price history imported from the. Uniswap V3 subgraph, for a given RMM01 or StableVol pool configuration $(K, \sigma, \tau)$. Allows us to see the rate of fee growth relative to the pools' volatility parameter. Observed values based solely on required arbitrage volume.
 
 I left the code relatively general so we can just add CFMMs and price processes as we see fit for testing. Functions in a simpy environment.
-
 
 ## Modules & Dependencies
 
