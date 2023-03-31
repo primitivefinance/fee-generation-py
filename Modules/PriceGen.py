@@ -1,6 +1,7 @@
 import numpy as np
 import requests
 import json
+import time
 
 # Randomly Generated Price Paths
 
@@ -21,9 +22,7 @@ def generateOU(T, mean, sigma, p0, dt, theta, env):
     OU = p0 * term + mean * (1 - term) + sigma * np.sqrt(dt / (2 * theta)) * W
     return OU
       
-# Backtesting Data
-
-import time
+# Backtesting Data USDC/USDT
 
 def queryUniswapV3(query, max_retries=5, initial_wait_time=1):
     url = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3'
@@ -82,12 +81,3 @@ end_timestamp = 1670073600                                  # January 1st, 2023 
 
 all_hourly_data = fetch_all_hourly_data(pool_id, start_timestamp, end_timestamp)
 close_values = [float(hour_data["close"]) for hour_data in all_hourly_data]
-
-# Calculate Volatility
-
-returns = []
-for i in range (0, len(close_values)-1):
-    hourly_change = (close_values[i+1]-close_values[i])/close_values[i]
-    returns.append(hourly_change)
-
-volatility_annualized = np.std(returns) * np.sqrt(365*24)

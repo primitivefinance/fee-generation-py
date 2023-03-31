@@ -1,6 +1,3 @@
-from scipy.optimize import newton as root
-import numpy as np
-
 class referenceArbitrage:
 
     def __init__(self, priceProcess, CFMM):

@@ -16,9 +16,9 @@ run_Backtest = True
 # Config Params
 
 K = 1               # Strike of RMM-01 Pool
-p0 = 1500           # Initial Pool and GBM Price
+p0 = 1500           # Initial RMM01 and GBM Price
 v = 1.1             # Implied Volatility RMM-01 Parameter
-T = 0.1           # Pool Duration in Years
+T = 0.1             # Pool Duration in Years
 dt = 0.015/365      # Time-Step Size in Years
 N = round(T/dt)     # Number of Time-Steps
 gamma = 0.997       # Fee Regime on CFMM
@@ -28,7 +28,7 @@ G = 100                         # Number of Pool Realized Volatility Values
 mu = 0.0                        # GBM Drift Parameter
 sigma = np.linspace(0.01, 3, G) # GBM Realized Volatility Parameter
 
-P0 = 1              # OU start price
+P0 = 1              # OU start price and StableVolatility initial price
 mean = 1            # OU mean price
 theta = 2/365       # OU mean reversion time
 
@@ -113,7 +113,7 @@ if run_Backtest:
         FeeIncome.append(sum(Fees))
         array3.append(sum(FeeIncome))
 
-# Plotting Implied Volatility Parameter vs. Average Fees Generated over M OUs of static RV
+# Plotting Implied Volatility Parameter vs. Average Fees Generated
 
 if run_GBM_simulation:
     plt.plot(sigma, array, 'g-') 
