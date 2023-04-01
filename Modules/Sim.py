@@ -23,6 +23,7 @@ dt = 0.015/365      # Time-Step Size in Years
 N = round(T/dt)     # Number of Time-Steps
 gamma = 0.997       # Fee Regime on CFMM
 c = 0.0025          # StableVolatility sigma*T parameter
+shares = 1000000    # Number of Shares in StableVolatility Pool
 
 G = 100                         # Number of Pool Realized Volatility Values
 mu = 0.0                        # GBM Drift Parameter
@@ -49,7 +50,7 @@ def simulateGBM(env, i):
         yield env.timeout(1)
 
 def simulateOU(env, i):
-    CFMM = StableVolatility(P0, K, sigma[i], T, gamma, env)
+    CFMM = StableVolatility(P0, K, sigma[i], T, gamma, env, shares)
 
     while True:
 
@@ -60,7 +61,7 @@ def simulateOU(env, i):
         yield env.timeout(1)
 
 def simulateBacktest(env, i):
-    CFMM = StableVolatility(P0, K, sigma[i], T, gamma, env)
+    CFMM = StableVolatility(P0, K, sigma[i], T, gamma, env, shares)
 
     while True:
 

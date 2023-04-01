@@ -124,33 +124,34 @@ class StableVolatility:
     gamma   - fee regime
     env     - environment variable
     '''
-    def __init__(self, p0, K, sigma, T, gamma, env):
+    def __init__(self, p0, K, sigma, T, gamma, env, shares):
         self.p0 = p0
         self.env = env
         self.strike = K
         self.T = T
         self.iv = sigma
+        self.shares = shares
         self.fee = 1 - gamma
-        self.x = 1 - norm.cdf(np.log(self.p0/self.strike)/(self.iv*np.sqrt(self.T)) + 0.5*self.iv*np.sqrt(self.T))
-        self.y = self.strike*norm.cdf(norm.ppf(1-self.x) - self.iv*np.sqrt(self.T))
+        self.x = (1 - norm.cdf(np.log(self.p0/self.strike)/(self.iv*np.sqrt(self.T)) + 0.5*self.iv*np.sqrt(self.T)))*self.shares
+        self.y = self.strike*norm.cdf(norm.ppf(1-self.x/self.shares) - self.iv*np.sqrt(self.T))*self.shares
     
     def TradingFunction(self):
         tau = self.T
-        k = self.y - self.strike*norm.cdf(norm.ppf(1 - self.x) - self.iv*np.sqrt(tau))
+        k = self.y/self.shares - self.strike*norm.cdf(norm.ppf(1 - self.x/self.shares) - self.iv*np.sqrt(tau))
         return k
 
     def marginalPrice(self):
         tau = self.T
-        return self.strike*np.exp(norm.ppf(1 - self.x)*self.iv*np.sqrt(tau) - 0.5*self.iv**2*tau)
+        return self.strike*np.exp(norm.ppf(1 - self.x/self.shares)*self.iv*np.sqrt(tau) - 0.5*self.iv**2*tau)
 
     def swapXforY(self, deltain):
         tau = self.T
-        if 1 - (deltain + self.x) < 1e-9:
+        if self.shares - (deltain + self.x) < 1e-9:
             deltaout = 0
             return deltaout, 0
         else:
             x_temp = self.x + (1 - self.fee) * deltain
-            deltaout = self.y - self.TradingFunction() - self.strike*norm.cdf(norm.ppf(1 - x_temp) - self.iv * np.sqrt(tau))
+            deltaout = self.y - self.TradingFunction()*self.shares - self.shares*self.strike*norm.cdf(norm.ppf(1 - x_temp/self.shares) - self.iv * np.sqrt(tau))
             if deltaout < 1e-9:
                 deltaout = 0
                 return deltaout, 0
@@ -162,12 +163,12 @@ class StableVolatility:
 
     def virtualswapXforY(self, deltain):
         tau = self.T
-        if 1 - (deltain + self.x) < 1e-9:
+        if self.shares - (deltain + self.x) < 1e-9:
             deltaout = 0
             return deltaout, 0
         else:
             x_temp = self.x + (1 - self.fee) * deltain
-            deltaout = self.y - self.TradingFunction() - self.strike*norm.cdf(norm.ppf(1 - x_temp) - self.iv * np.sqrt(tau))
+            deltaout = self.y - self.shares*self.TradingFunction() - self.shares*self.strike*norm.cdf(norm.ppf(1 - x_temp/self.shares) - self.iv * np.sqrt(tau))
             if deltaout < 1e-9:
                 deltaout = 0
                 return deltaout, 0
@@ -177,12 +178,12 @@ class StableVolatility:
             
     def swapYforX(self, deltain):
         tau = self.T
-        if self.strike + self.TradingFunction() - (deltain + self.y) < 1e-9:
+        if (self.strike + self.TradingFunction()) * self.shares - (deltain + self.y) < 1e-9:
             deltaout = 0
             return deltaout, 0
         else:
             y_temp = self.y + (1 - self.fee) * deltain
-            deltaout = self.x - 1 + norm.cdf(norm.ppf((y_temp - self.TradingFunction())/self.strike) + self.iv * np.sqrt(tau))
+            deltaout = self.x - self.shares + self.shares * norm.cdf(norm.ppf((y_temp/self.shares - self.TradingFunction())/self.strike) + self.iv * np.sqrt(tau))
             if deltaout < 1e-9:
                 deltaout = 0
                 return deltaout, 0
@@ -194,12 +195,12 @@ class StableVolatility:
 
     def virtualswapXforY(self, deltain):
         tau = self.T
-        if 1 - (deltain + self.x) < 1e-9:
+        if self.shares - (deltain + self.x) < 1e-9:
             deltaout = 0
             return deltaout, 0
         else:
             x_temp = self.x + (1 - self.fee) * deltain
-            deltaout = self.y - self.TradingFunction() - self.strike*norm.cdf(norm.ppf(1 - x_temp) - self.iv * np.sqrt(tau))
+            deltaout = self.y - self.shares*self.TradingFunction() - self.shares*self.strike*norm.cdf(norm.ppf(1 - x_temp/self.shares) - self.iv * np.sqrt(tau))
             if deltaout < 1e-9:
                 deltaout = 0
                 return deltaout, 0
@@ -210,13 +211,13 @@ class StableVolatility:
     def arbAmount(self, s):
         if s < self.marginalPrice():
             tau = self.T 
-            deltain = (1 - norm.cdf(np.log(s/self.strike)/(self.iv*np.sqrt(tau)) + 0.5*self.iv*np.sqrt(tau)) - self.x)/(1 - self.fee)
+            deltain = (self.shares - self.shares*norm.cdf(np.log(s/self.strike)/(self.iv*np.sqrt(tau)) + 0.5*self.iv*np.sqrt(tau)) - self.x)/(1 - self.fee)
             return deltain
 
         elif s > self.marginalPrice():
             tau = self.T
             x_temp = 1 - norm.cdf(np.log(s/self.strike)/(self.iv*np.sqrt(tau)) + 0.5*self.iv*np.sqrt(tau))
-            deltain = (self.strike*norm.cdf(norm.ppf(1 - x_temp) - self.iv*np.sqrt(tau)) + self.TradingFunction() - self.y)/(1 - self.fee)
+            deltain = (self.strike*norm.cdf(norm.ppf(1 - x_temp) - self.iv*np.sqrt(tau))*self.shares + self.TradingFunction()*self.shares - self.y)/(1 - self.fee)
             return deltain
 
         else:
