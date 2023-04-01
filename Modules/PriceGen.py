@@ -77,7 +77,7 @@ def fetch_all_hourly_data(pool_id, start_timestamp, end_timestamp):
 
 pool_id = "0x3416cf6c708da44db2624d63ea0aaef7113527c6"      # USDC/USDT
 start_timestamp = 1648512000                                # March 29th, 2022 00:00:00 UTC
-end_timestamp = 1670073600                                  # January 1st, 2023 00:00:00 UTC
+end_timestamp = 1670073600                                  # September 30th, 2022 00:00:00 UTC
 
 all_hourly_data = fetch_all_hourly_data(pool_id, start_timestamp, end_timestamp)
 close_values = [float(hour_data["close"]) for hour_data in all_hourly_data]
