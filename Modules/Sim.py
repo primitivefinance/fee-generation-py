@@ -17,7 +17,7 @@ run_Backtest = True
 
 K = 1               # Strike of RMM-01 Pool
 p0 = 1500           # Initial RMM01 and GBM Price
-v = 1.1             # Implied Volatility RMM-01 Parameter
+v = 0.1             # Implied Volatility RMM-01 Parameter
 T = 0.1             # Pool Duration in Years
 dt = 0.015/365      # Time-Step Size in Years
 N = round(T/dt)     # Number of Time-Steps
@@ -25,16 +25,16 @@ gamma = 0.997       # Fee Regime on CFMM
 c = 0.0025          # StableVolatility sigma*T parameter
 shares = 1000000    # Number of Shares in StableVolatility Pool
 
-G = 100                         # Number of Pool Realized Volatility Values
-mu = 0.0                        # GBM Drift Parameter
-sigma = np.linspace(0.01, 3, G) # GBM Realized Volatility Parameter
+G = 100                             # Number of Pool Realized Volatility Values
+mu = 0.0                            # GBM Drift Parameter
+sigma = np.linspace(0.001, 0.1, G)  # GBM Realized Volatility Parameter
 
 P0 = 1              # OU start price and StableVolatility initial price
 mean = 1            # OU mean price
 theta = 2/365       # OU mean reversion time
 
 
-M = 1              # Number of Simulation Runs per RV parameter
+M = 10              # Number of Simulation Runs per RV parameter
 
 # Simulation Processes
 

@@ -193,19 +193,19 @@ class StableVolatility:
                 feeEarned = self.fee * deltain
                 return deltaout, feeEarned
 
-    def virtualswapXforY(self, deltain):
+    def virtualswapYforX(self, deltain):
         tau = self.T
-        if self.shares - (deltain + self.x) < 1e-9:
+        if (self.strike + self.TradingFunction()) * self.shares - (deltain + self.y) < 1e-9:
             deltaout = 0
             return deltaout, 0
         else:
-            x_temp = self.x + (1 - self.fee) * deltain
-            deltaout = self.y - self.shares*self.TradingFunction() - self.shares*self.strike*norm.cdf(norm.ppf(1 - x_temp/self.shares) - self.iv * np.sqrt(tau))
+            y_temp = self.y + (1 - self.fee) * deltain
+            deltaout = self.x - self.shares + self.shares * norm.cdf(norm.ppf((y_temp/self.shares - self.TradingFunction())/self.strike) + self.iv * np.sqrt(tau))
             if deltaout < 1e-9:
                 deltaout = 0
                 return deltaout, 0
             else:
-                feeEarned = self.fee * deltain    
+                feeEarned = self.fee * deltain
                 return deltaout, feeEarned
 
     def arbAmount(self, s):
