@@ -10,14 +10,14 @@ import simpy
 # Simulation Choices
 
 run_GBM_simulation = False
-run_OU_simulation = False
-run_Backtest = True
+run_OU_simulation = True
+run_Backtest = False
 
 # Config Params
 
 K = 1               # Strike of RMM-01 Pool
 p0 = 1500           # Initial RMM01 and GBM Price
-v = 1.1             # Implied Volatility RMM-01 Parameter
+v = 0.1             # Implied Volatility RMM-01 Parameter
 T = 0.1             # Pool Duration in Years
 dt = 0.015/365      # Time-Step Size in Years
 N = round(T/dt)     # Number of Time-Steps
