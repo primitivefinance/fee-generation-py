@@ -21,9 +21,9 @@ v = 0.1             # Implied Volatility RMM-01 Parameter
 T = 0.1             # Pool Duration in Years
 dt = 0.015/365      # Time-Step Size in Years
 N = round(T/dt)     # Number of Time-Steps
-gamma = 0.997       # Fee Regime on CFMM
+gamma = 0.9995      # Fee Regime on CFMM
 c = 0.0025          # StableVolatility sigma*T parameter
-shares = 1000000    # Number of Shares in StableVolatility Pool
+shares = 100000     # Number of Shares in StableVolatility Pool
 
 G = 100                             # Number of Pool Realized Volatility Values
 mu = 0.0                            # GBM Drift Parameter
@@ -117,13 +117,15 @@ if run_Backtest:
 # Plotting Implied Volatility Parameter vs. Average Fees Generated
 
 if run_GBM_simulation:
-    plt.plot(sigma, array, 'g-') 
+    plt.plot(sigma, array, 'g-')
+    plt.title(f"Strike {K}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = {v*100}% annualized, Drift = {mu*100}%, GBM RMM-01 Simulation", fontsize=10) 
 elif run_OU_simulation:
     plt.plot(sigma, array2, 'g-')
+    plt.title(f"Strike {K}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = {v*100}% annualized, Mean Price = {mean}, Theta = {theta}, OU Stable Volatility Simulation", fontsize=10)
 elif run_Backtest:
     plt.plot(sigma, array3, 'g-')
+    plt.title(f"Strike {K}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = 2.56% annualized, Backtest USDC/USDT", fontsize=10)
 
-plt.xlabel("Pool Implied Volatility", fontsize=12)
-plt.ylabel("Expected Fees", fontsize=12)
-plt.title("Strike 1, Initial Price 1, RV = 2.5% annualized, T = 0.1 years, fee = 0.3%, Backtest USDC/USDT")
+plt.xlabel("Implied Volatility Parameter", fontsize=10)
+plt.ylabel("Expected Fees", fontsize=10)
 plt.show()
