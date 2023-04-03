@@ -3,6 +3,7 @@ import numpy as np
 from Arbitrage import referenceArbitrage as a
 from CFMM import RMM01
 from CFMM import StableVolatility
+from CFMM import ConstantSum
 import PriceGen as price
 from PriceGen import close_values
 import simpy
@@ -11,14 +12,15 @@ import simpy
 
 run_GBM_simulation = False
 run_OU_simulation = False
-run_Backtest = True
+run_Backtest = False
+run_ConstantSum_test = True
 
 # Config Params
 
 K = 1               # Strike of RMM-01 Pool
 p0 = 1500           # Initial RMM01 and GBM Price
 v = 0.1             # Implied Volatility RMM-01 Parameter
-T = 0.1             # Pool Duration in Years
+T = 7/365           # Pool Duration in Years
 dt = 0.015/365      # Time-Step Size in Years
 N = round(T/dt)     # Number of Time-Steps
 gamma = 0.9995      # Fee Regime on CFMM
@@ -34,7 +36,7 @@ mean = 1            # OU mean price
 theta = 2/365       # OU mean reversion time
 
 
-M = 10              # Number of Simulation Runs per RV parameter
+M = 1              # Number of Simulation Runs per RV parameter
 
 # Simulation Processes
 
@@ -66,6 +68,16 @@ def simulateBacktest(env, i):
     while True:
 
         arb = a(close_values[env.now], CFMM)
+        arb.arbitrage()
+        Fees.append(arb.Fees)
+        yield env.timeout(1)
+
+def simulateConstantSum(env):
+    CFMM = ConstantSum(K, 10000, 10000, gamma, env)
+
+    while True:
+        OU = price.generateOU(T, mean, v, P0, dt, theta, env)
+        arb = a(OU, CFMM)
         arb.arbitrage()
         Fees.append(arb.Fees)
         yield env.timeout(1)
@@ -114,18 +126,33 @@ if run_Backtest:
         FeeIncome.append(sum(Fees))
         array3.append(sum(FeeIncome))
 
+# Constant Sum OU Test
+
+if run_ConstantSum_test:
+    Fees = []
+    env = simpy.Environment()
+    env.process(simulateConstantSum(env))
+    env.run(until=N)
+    FeeIncome = sum(Fees)
+    print(FeeIncome)
+
 # Plotting Implied Volatility Parameter vs. Average Fees Generated
 
 if run_GBM_simulation:
     plt.plot(sigma, array, 'g-')
     plt.title(f"Strike {K}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = {v*100}% annualized, Drift = {mu*100}%, GBM RMM-01 Simulation", fontsize=10) 
+    plt.xlabel("Implied Volatility Parameter", fontsize=10)
+    plt.ylabel("Expected Fees", fontsize=10)
+    plt.show()
 elif run_OU_simulation:
     plt.plot(sigma, array2, 'g-')
     plt.title(f"Strike {K}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = {v*100}% annualized, Mean Price = {mean}, Theta = {theta}, OU Stable Volatility Simulation", fontsize=10)
+    plt.xlabel("Implied Volatility Parameter", fontsize=10)
+    plt.ylabel("Expected Fees", fontsize=10)
+    plt.show()
 elif run_Backtest:
     plt.plot(sigma, array3, 'g-')
     plt.title(f"Strike {K}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = 2.56% annualized, Backtest USDC/USDT", fontsize=10)
-
-plt.xlabel("Implied Volatility Parameter", fontsize=10)
-plt.ylabel("Expected Fees", fontsize=10)
-plt.show()
+    plt.xlabel("Implied Volatility Parameter", fontsize=10)
+    plt.ylabel("Expected Fees", fontsize=10)
+    plt.show()

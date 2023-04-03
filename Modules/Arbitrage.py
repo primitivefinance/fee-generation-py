@@ -12,7 +12,7 @@ class referenceArbitrage:
             
             Swap = self.CFMM.virtualswapYforX(self.CFMM.arbAmount(self.p))
 
-            if Swap[0] * self.p - self.CFMM.arbAmount(self.p) > 100:
+            if Swap[0] * self.p - self.CFMM.arbAmount(self.p) > 1:
                 self.Fees = Swap[1]
                 self.Volume = Swap[0]*self.p
                 self.CFMM.swapYforX(self.CFMM.arbAmount(self.p))
@@ -23,7 +23,7 @@ class referenceArbitrage:
 
             Swap = self.CFMM.virtualswapXforY(self.CFMM.arbAmount(self.p))
 
-            if Swap[0] - self.CFMM.arbAmount(self.p) * self.p > 100:
+            if Swap[0] - self.CFMM.arbAmount(self.p) * self.p > 1:
                 self.Fees = Swap[1]*self.p
                 self.Volume = Swap[0]
                 self.CFMM.swapXforY(self.CFMM.arbAmount(self.p))

@@ -35,7 +35,7 @@ class RMM01:
 
     def swapXforY(self, deltain):
         tau = self.T - self.dt * self.env.now
-        if 1 - (deltain + self.x) < 1e-9:
+        if 1 - (deltain + self.x) < 0:
             deltaout = 0
             return deltaout, 0
         else:
@@ -52,7 +52,7 @@ class RMM01:
 
     def virtualswapXforY(self, deltain):
         tau = self.T - self.dt * self.env.now
-        if 1 - (deltain + self.x) < 1e-9:
+        if 1 - (deltain + self.x) < 0:
             deltaout = 0
             return deltaout, 0
         else:
@@ -67,7 +67,7 @@ class RMM01:
 
     def swapYforX(self, deltain):
         tau = self.T - self.dt * self.env.now
-        if self.strike + self.TradingFunction() - (deltain + self.y) < 1e-9:
+        if self.strike + self.TradingFunction() - (deltain + self.y) < 0:
             deltaout = 0
             return deltaout, 0
         else:
@@ -84,7 +84,7 @@ class RMM01:
 
     def virtualswapYforX(self, deltain):
         tau = self.T - self.dt * self.env.now
-        if self.strike + self.TradingFunction() - (deltain + self.y) < 1e-9:
+        if self.strike + self.TradingFunction() - (deltain + self.y) < 0:
             deltaout = 0
             return deltaout, 0
         else:
@@ -220,6 +220,62 @@ class StableVolatility:
             deltain = (self.strike*norm.cdf(norm.ppf(1 - x_temp) - self.iv*np.sqrt(tau))*self.shares + self.TradingFunction()*self.shares - self.y)/(1 - self.fee)
             return deltain
 
+        else:
+            deltain = 0
+            return deltain
+        
+class ConstantSum:
+    def __init__(self, K, init_x, init_y, gamma, env):
+        self.K = K
+        self.env = env
+        self.x = init_x
+        self.y = init_y
+        self.gamma = gamma
+
+    def TradingFunction(self):
+        return self.x * self.K + self.y
+
+    def marginalPrice(self):
+        return self.K
+
+    def swapXforY(self, deltain):
+
+        deltaout = self.K * deltain * self.gamma
+        self.x += deltain
+        self.y -= deltaout
+        FeeEarned = (1 - self.gamma) * deltain
+        return deltaout, FeeEarned
+    
+    def swapYforX(self, deltain):
+
+        deltaout = deltain * self.gamma / self.K
+        self.y += deltain
+        self.x -= deltaout
+        FeeEarned = (1 - self.gamma) * deltain
+        return deltaout, FeeEarned
+    
+    def virtualswapXforY(self, deltain):
+
+        deltaout = self.K * deltain * self.gamma
+        FeeEarned = (1 - self.gamma) * deltain
+        return deltaout, FeeEarned
+    
+    def virtualswapYforX(self, deltain):
+        
+        deltaout = deltain * self.gamma / self.K
+        FeeEarned = (1 - self.gamma) * deltain
+        return deltaout, FeeEarned
+    
+    def arbAmount(self, s):
+
+        if s < self.K:
+            deltaout = self.y
+            deltain = deltaout / (self.gamma * self.K)
+            return deltain
+        elif s > self.K:
+            deltaout = self.x
+            deltain = deltaout * self.gamma * self.K
+            return deltain
         else:
             deltain = 0
             return deltain
