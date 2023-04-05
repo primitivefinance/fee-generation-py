@@ -146,13 +146,13 @@ class StableVolatility:
 
     def swapXforY(self, deltain):
         tau = self.T
-        if self.shares - (deltain + self.x) < 1e-9:
+        if self.shares - (deltain + self.x) < 0:
             deltaout = 0
             return deltaout, 0
         else:
             x_temp = self.x + (1 - self.fee) * deltain
             deltaout = self.y - self.TradingFunction()*self.shares - self.shares*self.strike*norm.cdf(norm.ppf(1 - x_temp/self.shares) - self.iv * np.sqrt(tau))
-            if deltaout < 1e-9:
+            if deltaout < 1e-14:
                 deltaout = 0
                 return deltaout, 0
             else:
@@ -163,13 +163,13 @@ class StableVolatility:
 
     def virtualswapXforY(self, deltain):
         tau = self.T
-        if self.shares - (deltain + self.x) < 1e-9:
+        if self.shares - (deltain + self.x) < 0:
             deltaout = 0
             return deltaout, 0
         else:
             x_temp = self.x + (1 - self.fee) * deltain
             deltaout = self.y - self.shares*self.TradingFunction() - self.shares*self.strike*norm.cdf(norm.ppf(1 - x_temp/self.shares) - self.iv * np.sqrt(tau))
-            if deltaout < 1e-9:
+            if deltaout < 1e-14:
                 deltaout = 0
                 return deltaout, 0
             else:
@@ -178,46 +178,38 @@ class StableVolatility:
             
     def swapYforX(self, deltain):
         tau = self.T
-        if (self.strike + self.TradingFunction()) * self.shares - (deltain + self.y) < 1e-9:
+        y_temp = self.y + (1 - self.fee) * deltain
+        deltaout = self.x - self.shares + self.shares * norm.cdf(norm.ppf((y_temp/self.shares - self.TradingFunction())/self.strike) + self.iv * np.sqrt(tau))
+        if deltaout < 1e-14:
             deltaout = 0
             return deltaout, 0
         else:
-            y_temp = self.y + (1 - self.fee) * deltain
-            deltaout = self.x - self.shares + self.shares * norm.cdf(norm.ppf((y_temp/self.shares - self.TradingFunction())/self.strike) + self.iv * np.sqrt(tau))
-            if deltaout < 1e-9:
-                deltaout = 0
-                return deltaout, 0
-            else:
-                self.y += deltain
-                self.x -= deltaout
-                feeEarned = self.fee * deltain
-                return deltaout, feeEarned
+            self.y += deltain
+            self.x -= deltaout
+            feeEarned = self.fee * deltain
+            return deltaout, feeEarned
 
     def virtualswapYforX(self, deltain):
         tau = self.T
-        if (self.strike + self.TradingFunction()) * self.shares - (deltain + self.y) < 1e-9:
+        y_temp = self.y + (1 - self.fee) * deltain
+        deltaout = self.x - self.shares + self.shares * norm.cdf(norm.ppf((y_temp/self.shares - self.TradingFunction())/self.strike) + self.iv * np.sqrt(tau))
+        if deltaout < 1e-14:
             deltaout = 0
             return deltaout, 0
         else:
-            y_temp = self.y + (1 - self.fee) * deltain
-            deltaout = self.x - self.shares + self.shares * norm.cdf(norm.ppf((y_temp/self.shares - self.TradingFunction())/self.strike) + self.iv * np.sqrt(tau))
-            if deltaout < 1e-9:
-                deltaout = 0
-                return deltaout, 0
-            else:
-                feeEarned = self.fee * deltain
-                return deltaout, feeEarned
+            feeEarned = self.fee * deltain
+            return deltaout, feeEarned
 
     def arbAmount(self, s):
         if s < self.marginalPrice():
             tau = self.T 
-            deltain = (self.shares - self.shares*norm.cdf(np.log(s/self.strike)/(self.iv*np.sqrt(tau)) + 0.5*self.iv*np.sqrt(tau)) - self.x)/(1 - self.fee)
+            deltain = (self.shares - self.shares*norm.cdf(np.log(s/self.strike)/(self.iv*np.sqrt(tau)) + 0.5*self.iv*np.sqrt(tau)) - self.x)
             return deltain
 
         elif s > self.marginalPrice():
             tau = self.T
             x_temp = 1 - norm.cdf(np.log(s/self.strike)/(self.iv*np.sqrt(tau)) + 0.5*self.iv*np.sqrt(tau))
-            deltain = (self.strike*norm.cdf(norm.ppf(1 - x_temp) - self.iv*np.sqrt(tau))*self.shares + self.TradingFunction()*self.shares - self.y)/(1 - self.fee)
+            deltain = (self.strike*norm.cdf(norm.ppf(1 - x_temp) - self.iv*np.sqrt(tau))*self.shares + self.TradingFunction()*self.shares - self.y)
             return deltain
 
         else:
