@@ -12,24 +12,23 @@ import simpy
 
 run_GBM_simulation = False
 run_OU_simulation = False
-run_Backtest = False
-run_ConstantSum_test = True
+run_Backtest = True
+run_ConstantSum_test = False
 
 # Config Params
 
 K = 1               # Strike of RMM-01 Pool
 p0 = 1500           # Initial RMM01 and GBM Price
 v = 0.1             # Implied Volatility RMM-01 Parameter
-T = 7/365           # Pool Duration in Years
+T = 0.1             # Pool Duration in Years
 dt = 0.015/365      # Time-Step Size in Years
 N = round(T/dt)     # Number of Time-Steps
-gamma = 0.9995      # Fee Regime on CFMM
-c = 0.0025          # StableVolatility sigma*T parameter
+gamma = 0.9999      # Fee Regime on CFMM
 shares = 100000     # Number of Shares in StableVolatility Pool
 
-G = 100                             # Number of Pool Realized Volatility Values
+G = 20                             # Number of Pool Realized Volatility Values
 mu = 0.0                            # GBM Drift Parameter
-sigma = np.linspace(0.001, 0.1, G)  # GBM Realized Volatility Parameter
+sigma = np.linspace(0.001, 0.2, G)  # GBM Realized Volatility Parameter
 
 P0 = 1              # OU start price and StableVolatility initial price
 mean = 1            # OU mean price
@@ -73,7 +72,7 @@ def simulateBacktest(env, i):
         yield env.timeout(1)
 
 def simulateConstantSum(env):
-    CFMM = ConstantSum(K, 10000, 10000, gamma, env)
+    CFMM = ConstantSum(K, shares/2, shares/2, gamma, env)
 
     while True:
         OU = price.generateOU(T, mean, v, P0, dt, theta, env)
