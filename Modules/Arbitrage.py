@@ -10,11 +10,12 @@ class referenceArbitrage:
     priceProcess (float): The price process to be used for arbitrage
     CFMM (class): The CFMM to be used for arbitrage
     '''
-    def __init__(self, priceProcess, CFMM):
+    def __init__(self, priceProcess, CFMM, ArbBound):
         self.CFMM = CFMM
         self.p = priceProcess
         self.Fees = 0
         self.Volume = 0
+        self.ArbBound = ArbBound
 
     def arbitrage(self):
 
@@ -22,7 +23,7 @@ class referenceArbitrage:
             
             Swap = self.CFMM.virtualswapYforX(self.CFMM.arbAmount(self.p))
 
-            if Swap[0] * self.p - self.CFMM.arbAmount(self.p) > 1:
+            if Swap[0] * self.p - self.CFMM.arbAmount(self.p) > self.ArbBound:
                 self.Fees = Swap[1]
                 self.Volume = Swap[0]*self.p
                 self.CFMM.swapYforX(self.CFMM.arbAmount(self.p))
@@ -34,7 +35,7 @@ class referenceArbitrage:
 
             Swap = self.CFMM.virtualswapXforY(self.CFMM.arbAmount(self.p))
 
-            if Swap[0] - self.CFMM.arbAmount(self.p) * self.p > 1:
+            if Swap[0] - self.CFMM.arbAmount(self.p) * self.p > self.ArbBound:
                 self.Fees = Swap[1]*self.p
                 self.Volume = Swap[0]
                 self.CFMM.swapXforY(self.CFMM.arbAmount(self.p))
