@@ -3,6 +3,7 @@ import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 import simpy
 import configparser
+import pandas as pd
 
 from Arbitrage import referenceArbitrage as a
 import CFMM
@@ -36,7 +37,7 @@ K1 = float(config["Pool"]["strike_RMM01"])
 p0 = float(config["Pool"]["P0_RMM01"])
 K2 = float(config["Pool"]["strike_SV"])
 P0 = float(config["Pool"]["P0_SV"])
-sigma = np.linspace(sigma_low, sigma_high, G) 
+sigma = np.linspace(sigma_low, sigma_high, G)
 T = float(config["Pool"]["time_horizon"])
 dt = float(config["Pool"]["timestep_size"])
 N = round(T/dt)
@@ -180,21 +181,34 @@ if run_ConstantSum_test:
 
 if run_GBM_simulation:
     plt.plot(sigma, avgIncome, color='#2BBA58')
-    plt.errorbar(sigma, avgIncomeGBM, yerr=stdIncomeGBM, ecolor='#BCF2CD', capthick=2)
+    plt.errorbar(sigma, avgIncomeGBM, yerr=stdIncomeGBM, color='#2BBA58', ecolor='#BCF2CD', capthick=2)
     plt.title(f"Strike {K1}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = {v*100}% annualized, Drift = {mu*100}%, GBM RMM-01 Simulation", fontsize=10) 
     plt.xlabel("Implied Volatility Parameter", fontsize=10)
     plt.ylabel("Expected Fees", fontsize=10)
     plt.show()
     plt.close()
 
+    # Exporting data to CSV
+
+    data = {'Column1': sigma, 'Column2': avgIncomeGBM, 'Column3': stdIncomeGBM}
+    df = pd.DataFrame(data)
+    df.to_csv('GBMTest.csv', index=False)
+
 elif run_OU_simulation:
     plt.plot(sigma, avgIncomeOU, color='#2BBA58')
-    plt.errorbar(sigma, avgIncomeOU, yerr=stdIncomeOU, ecolor='#BCF2CD', capthick=2)
+    plt.errorbar(sigma, avgIncomeOU, yerr=stdIncomeOU, color='#2BBA58', ecolor='#BCF2CD', capthick=2)
     plt.title(f"Strike {K2}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = {v*100}% annualized, Mean Price = {mean}, Theta = {theta}, OU Stable Volatility Simulation", fontsize=10)
     plt.xlabel("Implied Volatility Parameter", fontsize=10)
     plt.ylabel("Expected Fees", fontsize=10)
+    plt.legend()
     plt.show()
     plt.close()
+
+    # Exporting data to CSV
+
+    data = {'Column1': sigma, 'Column2': avgIncomeOU, 'Column3': stdIncomeOU}
+    df = pd.DataFrame(data)
+    df.to_csv('OUTest.csv', index=False)
 
 elif run_Backtest:
     plt.plot(sigma, IncomeBacktest, color='#2BBA58')
@@ -203,3 +217,9 @@ elif run_Backtest:
     plt.ylabel("Expected Fees", fontsize=10)
     plt.show()
     plt.close()
+
+    # Exporting data to CSV
+
+    data = {'Column1': sigma, 'Column2': IncomeBacktest}
+    df = pd.DataFrame(data)
+    df.to_csv('Backtest.csv', index=False)
