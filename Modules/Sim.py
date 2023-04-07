@@ -9,13 +9,16 @@ from CFMM import StableVolatility
 from CFMM import ConstantSum
 import PriceGen as price
 from PriceGen import close_values
+from cli import parse_arguments
+
+args = parse_arguments()
 
 # Simulation Choices
 
-run_GBM_simulation = False
-run_OU_simulation = True
-run_Backtest = False
-run_ConstantSum_test = False
+run_GBM_simulation = args.GBM
+run_OU_simulation = args.OU
+run_Backtest = args.Backtest
+run_ConstantSum_test = args.CS
 
 # Config Params
 
