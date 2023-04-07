@@ -2,16 +2,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 import simpy
+import configparser
 
 from Arbitrage import referenceArbitrage as a
-from CFMM import RMM01
-from CFMM import StableVolatility
-from CFMM import ConstantSum
+import CFMM
 import PriceGen as price
-from PriceGen import close_values
 from cli import parse_arguments
 
+# Utilities for Config and CLI
+
 args = parse_arguments()
+
+def read_config_file(config_file):
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    return config
+
+config = read_config_file("config.ini")
 
 # Simulation Choices
 
@@ -22,69 +29,66 @@ run_ConstantSum_test = args.CS
 
 # Config Params
 
-G = 100      # Number of Pool Realized Volatility Values
-
-K1 = 1500                               # Strike of RMM-01 Pool
-p0 = 1500                               # Initial RMM01 and GBM Price
-K2 = 1                                  # Strike of StableVolatility Pool
-P0 = 1                                  # Initial OU and StableVolatility Price
-sigma = np.linspace(0.0001, 0.1, G)     # Pool Implied Volatility Parameter
-T = 1/365                                 # Pool Time Horizon in Years
-dt = 0.015/365                          # Time-Step Size in Years
-N = round(T/dt)                         # Number of Time-Steps
-gamma = 0.9999                          # Fee Regime on CFMM
-shares = 100000                         # Number of Shares in CFMM
-
-v = 0.7             # GBM & OU Volatility Parameter
-mu = 0.0            # GBM Drift Parameter
-
-mean = 1            # OU mean price
-theta = 0.01        # OU mean reversion time
-
-Arb = 5             # Arbitrage Profit Threshold Denominated in Numeraire
-
-M = 10              # Number of Simulation Runs per IV parameter
+G = int(config["Sim"]["G"])
+sigma_low = float(config["Sim"]["sigma_low"])
+sigma_high = float(config["Sim"]["sigma_high"])
+K1 = float(config["Pool"]["strike_RMM01"])
+p0 = float(config["Pool"]["P0_RMM01"])
+K2 = float(config["Pool"]["strike_SV"])
+P0 = float(config["Pool"]["P0_SV"])
+sigma = np.linspace(sigma_low, sigma_high, G) 
+T = float(config["Pool"]["time_horizon"])
+dt = float(config["Pool"]["timestep_size"])
+N = round(T/dt)
+gamma = float(config["Pool"]["gamma"])
+shares = float(config["Pool"]["shares"])
+v = float(config["GBM"]["volatility"])
+mu = float(config["GBM"]["drift"])
+mean = float(config["OU"]["mean"])
+theta = float(config["OU"]["theta"])
+M = int(config["Sim"]["M"])
+Arb = float(config["Sim"]["Arb"])
 
 # Simulation Processes
 
 def simulateGBM(env, i, Fees):
-    CFMM = RMM01(p0, K1, sigma[i], T, dt, gamma, env, shares)
+    Curve = CFMM.RMM01(p0, K1, sigma[i], T, dt, gamma, env, shares)
     
     while True:
 
         GBM = price.generateGBM(T, mu, v, p0, dt, env)
-        arb = a(GBM, CFMM, Arb)
+        arb = a(GBM, Curve, Arb)
         arb.arbitrage()
         Fees.append(arb.Fees)
         yield env.timeout(1)
 
 def simulateOU(env, i, Fees):
-    CFMM = StableVolatility(P0, K2, sigma[i], T, gamma, env, shares)
+    Curve = CFMM.StableVolatility(P0, K2, sigma[i], T, gamma, env, shares)
 
     while True:
 
         OU = price.generateOU(T, mean, v, P0, dt, theta, env)
-        arb = a(OU, CFMM, Arb)
+        arb = a(OU, Curve, Arb)
         arb.arbitrage()
         Fees.append(arb.Fees)
         yield env.timeout(1)
 
 def simulateBacktest(env, i, Fees):
-    CFMM = StableVolatility(P0, K2, sigma[i], T, gamma, env, shares)
+    Curve = CFMM.StableVolatility(P0, K2, sigma[i], T, gamma, env, shares)
 
     while True:
 
-        arb = a(close_values[env.now], CFMM, Arb)
+        arb = a(price.close_values[env.now], Curve, Arb)
         arb.arbitrage()
         Fees.append(arb.Fees)
         yield env.timeout(1)
 
 def simulateConstantSum(env):
-    CFMM = ConstantSum(K2, shares/2, shares/2, gamma, env)
+    Curve = CFMM.ConstantSum(K2, shares/2, shares/2, gamma, env)
 
     while True:
         OU = price.generateOU(T, mean, v, P0, dt, theta, env)
-        arb = a(OU, CFMM, Arb)
+        arb = a(OU, Curve, Arb)
         arb.arbitrage()
         Fees.append(arb.Fees)
         yield env.timeout(1)
@@ -106,15 +110,15 @@ def GBMSimProcess(j):
 
 ## Multithreading
 
-avgIncome = []
-varIncome = []
+avgIncomeGBM = []
+varIncomeGBM = []
 if run_GBM_simulation:
     array = []
     with ThreadPoolExecutor() as executor:
         array = list(executor.map(GBMSimProcess, range(G)))
     avgIncome, varIncome = zip(*array)
 
-stdIncome = [np.sqrt(var) for var in varIncome]
+stdIncomeGBM = [np.sqrt(var) for var in varIncomeGBM]
 
 # OU Based Stable Volatility simulation
 
@@ -133,15 +137,15 @@ def OUSimProcess(j):
 
 ## Multithreading
 
-avgIncome2 = []
-varIncome2 = []
+avgIncomeOU = []
+varIncomeOU = []
 if run_OU_simulation:
-    array2 = []
+    array = []
     with ThreadPoolExecutor() as executor:
-        array2 = list(executor.map(OUSimProcess, range(G)))
-    avgIncome2, varIncome2 = zip(*array2)
+        array = list(executor.map(OUSimProcess, range(G)))
+    avgIncomeOU, varIncomeOU = zip(*array)
 
-stdIncome2 = [np.sqrt(var) for var in varIncome2]
+stdIncomeOU = [np.sqrt(var) for var in varIncomeOU]
 
 # Backtest Stable Volatility simulation
 
@@ -157,10 +161,10 @@ def BacktestProcess(j):
 
 ## Multithreading
 
-array3 = []
+IncomeBacktest = []
 if run_Backtest:
     with ThreadPoolExecutor() as executor:
-        array3 = list(executor.map(BacktestProcess, range(G)))
+        IncomeBacktest = list(executor.map(BacktestProcess, range(G)))
 
 # Constant Sum OU Test
 
@@ -176,7 +180,7 @@ if run_ConstantSum_test:
 
 if run_GBM_simulation:
     plt.plot(sigma, avgIncome, color='#2BBA58')
-    plt.errorbar(sigma, avgIncome, yerr=stdIncome, ecolor='#BCF2CD', capthick=2)
+    plt.errorbar(sigma, avgIncomeGBM, yerr=stdIncomeGBM, ecolor='#BCF2CD', capthick=2)
     plt.title(f"Strike {K1}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = {v*100}% annualized, Drift = {mu*100}%, GBM RMM-01 Simulation", fontsize=10) 
     plt.xlabel("Implied Volatility Parameter", fontsize=10)
     plt.ylabel("Expected Fees", fontsize=10)
@@ -184,8 +188,8 @@ if run_GBM_simulation:
     plt.close()
 
 elif run_OU_simulation:
-    plt.plot(sigma, avgIncome2, color='#2BBA58')
-    plt.errorbar(sigma, avgIncome2, yerr=stdIncome2, ecolor='#BCF2CD', capthick=2)
+    plt.plot(sigma, avgIncomeOU, color='#2BBA58')
+    plt.errorbar(sigma, avgIncomeOU, yerr=stdIncomeOU, ecolor='#BCF2CD', capthick=2)
     plt.title(f"Strike {K2}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = {v*100}% annualized, Mean Price = {mean}, Theta = {theta}, OU Stable Volatility Simulation", fontsize=10)
     plt.xlabel("Implied Volatility Parameter", fontsize=10)
     plt.ylabel("Expected Fees", fontsize=10)
@@ -193,7 +197,7 @@ elif run_OU_simulation:
     plt.close()
 
 elif run_Backtest:
-    plt.plot(sigma, array3, color='#2BBA58')
+    plt.plot(sigma, IncomeBacktest, color='#2BBA58')
     plt.title(f"Strike {K2}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = 2.56% annualized, Backtest USDC/USDT", fontsize=10)
     plt.xlabel("Implied Volatility Parameter", fontsize=10)
     plt.ylabel("Expected Fees", fontsize=10)
