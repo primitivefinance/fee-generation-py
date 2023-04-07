@@ -192,7 +192,7 @@ if run_GBM_simulation:
 
     data = {'Column1': sigma, 'Column2': avgIncomeGBM, 'Column3': stdIncomeGBM}
     df = pd.DataFrame(data)
-    df.to_csv('GBMTest.csv', index=False)
+    df.to_csv(f"GBMTest{M}Runs{G}IVs{sigma_low}to{sigma_high}.csv", index=False)
 
 elif run_OU_simulation:
     plt.plot(sigma, avgIncomeOU, color='#2BBA58')
@@ -208,7 +208,7 @@ elif run_OU_simulation:
 
     data = {'Column1': sigma, 'Column2': avgIncomeOU, 'Column3': stdIncomeOU}
     df = pd.DataFrame(data)
-    df.to_csv('OUTest.csv', index=False)
+    df.to_csv(f"OUTest{M}Runs{G}IVs{sigma_low}to{sigma_high}.csv", index=False)
 
 elif run_Backtest:
     plt.plot(sigma, IncomeBacktest, color='#2BBA58')
@@ -222,4 +222,4 @@ elif run_Backtest:
 
     data = {'Column1': sigma, 'Column2': IncomeBacktest}
     df = pd.DataFrame(data)
-    df.to_csv('Backtest.csv', index=False)
+    df.to_csv(f"USDCUSDT_Backtest{G}IVs{sigma_low}to{sigma_high}.csv", index=False)
