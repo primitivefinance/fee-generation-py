@@ -167,6 +167,7 @@ class StableVolatility:
                 self.x += deltain
                 self.y -= deltaout
                 feeEarned = self.fee * deltain
+                print("Swapped X for Y")
                 return deltaout, feeEarned
 
     def virtualswapXforY(self, deltain):
@@ -195,6 +196,7 @@ class StableVolatility:
             self.y += deltain
             self.x -= deltaout
             feeEarned = self.fee * deltain
+            print("Swapped Y for X")
             return deltaout, feeEarned
 
     def virtualswapYforX(self, deltain):

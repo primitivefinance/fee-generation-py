@@ -108,6 +108,9 @@ def simulateOU(env, i, Fees):
         arb = a(OU, Curve, Arb)
         arb.arbitrage()
         Fees.append(arb.Fees)
+        print("Marginal Price:", Curve.marginalPrice())
+        print("Reference Price:", OU)
+        print("Price Diffference:", Curve.marginalPrice() - OU)
         yield env.timeout(1)
 
 def OUSimProcess(j):
