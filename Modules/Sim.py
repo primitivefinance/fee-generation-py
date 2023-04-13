@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import simpy
 import configparser
 import pandas as pd
+import os
 
 from Arbitrage import referenceArbitrage as a
 import CFMM
@@ -27,6 +28,7 @@ run_GBM_simulation = args.GBM
 run_OU_simulation = args.OU
 run_Backtest = args.Backtest
 run_ConstantSum_test = args.CS
+run_Backtest_OptimizedC = args.OptimizedTest
 
 # config.ini Parameters
 
@@ -80,6 +82,7 @@ def GBMSimProcess(j):
         FeeIncome.append(sum(Fees))
     avgIncome = sum(FeeIncome)/M
     varIncome = sum([(fee - avgIncome)**2 for fee in FeeIncome])/M
+    print(f"{j}/{G} Complete")
     return avgIncome, varIncome
 
 ## Multithreaded execution against different implied volatility parameters
@@ -124,6 +127,7 @@ def OUSimProcess(j):
         FeeIncome.append(sum(Fees))
     avgIncome = sum(FeeIncome)/M
     varIncome = sum([(fee - avgIncome)**2 for fee in FeeIncome])/M
+    print(f"{j}/{G} Complete")
     return avgIncome, varIncome
 
 ## Multithreaded execution against different implied volatility parameters
@@ -164,6 +168,7 @@ def BacktestProcess(j):
     env.run(until=len(price.close_values))
 
     FeeIncome.append(sum(Fees))
+    print(f"{j}/{G} Complete")
     return sum(FeeIncome)
 
 ## Multithreaded execution against different implied volatility parameters
@@ -186,12 +191,41 @@ def simulateConstantSum(env):
         yield env.timeout(1)
 
 if run_ConstantSum_test:
+    FeeIncome = []
+    for i in range (0, M):
+        Fees = []
+        env = simpy.Environment()
+        env.process(simulateConstantSum(env))
+        env.run(until=N)
+        FeeIncome.append(sum(Fees))
+    FeeIncome = sum(FeeIncome)/M
+    print(FeeIncome)
+
+# 0.000415 c value Backtest
+
+def simulateBacktest_OptimizedC(env, Fees):
+    '''
+    Performs arbitrage at each simulation timestep between Stable Volatility and USDC/USDT price data from the Uniswap V3 subgraph and records the arbitrage fees.
+    T must be 7/365 for this to work.
+    '''
+    Curve = CFMM.StableVolatility(P0, K2, 0.002, T, gamma, env, shares)
+
+    while True:
+
+        arb = a(price.close_values[env.now], Curve, Arb)
+        arb.arbitrage()
+        Fees.append(arb.Fees)
+        yield env.timeout(1)
+
+if run_Backtest_OptimizedC:
     Fees = []
     env = simpy.Environment()
-    env.process(simulateConstantSum(env))
-    env.run(until=N)
+    env.process(simulateBacktest_OptimizedC(env, Fees))
+    env.run(until=len(price.close_values))
     FeeIncome = sum(Fees)
-    print(FeeIncome)
+    print("Fees Earned:", FeeIncome)
+
+# Plotting and Data Export    
 
 if run_GBM_simulation:
     '''
@@ -208,7 +242,13 @@ if run_GBM_simulation:
 
     data = {'Column1': sigma, 'Column2': avgIncomeGBM, 'Column3': stdIncomeGBM}
     df = pd.DataFrame(data)
-    df.to_csv(f"GBMTest{M}Runs{G}IVs{sigma_low}to{sigma_high}.csv", index=False)
+
+    output_directory = "output"
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+    output_file_name = f"GBMTest{M}Runs{G}IVs{sigma_low}to{sigma_high}.csv"
+
+    df.to_csv(os.path.join(output_directory, output_file_name), index=False)
 
 elif run_OU_simulation:
     '''
@@ -226,7 +266,13 @@ elif run_OU_simulation:
 
     data = {'Column1': sigma, 'Column2': avgIncomeOU, 'Column3': stdIncomeOU}
     df = pd.DataFrame(data)
-    df.to_csv(f"OUTest{M}Runs{G}IVs{sigma_low}to{sigma_high}.csv", index=False)
+
+    output_directory = "output"
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+    output_file_name = f"OUTest{M}Runs{G}IVs{sigma_low}to{sigma_high}.csv"
+
+    df.to_csv(os.path.join(output_directory, output_file_name), index=False)
 
 elif run_Backtest:
     '''
@@ -242,4 +288,10 @@ elif run_Backtest:
 
     data = {'Column1': sigma, 'Column2': IncomeBacktest}
     df = pd.DataFrame(data)
-    df.to_csv(f"USDCUSDT_Backtest{G}IVs{sigma_low}to{sigma_high}.csv", index=False)
+
+    output_directory = "output"
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+    output_file_name = f"USDCUSDT_Backtest{G}IVs{sigma_low}to{sigma_high}.csv"
+
+    df.to_csv(os.path.join(output_directory, output_file_name), index=False)
