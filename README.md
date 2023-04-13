@@ -25,3 +25,4 @@ The simulation runs using commands to specify which simulation process to run an
 - ``python3 Sim.py --OU`` runs an Ornstein-Uhlenbeck process centered at 1 against a Stable Portfolio pool
 - ``python3 Sim.py --Backtest`` runs 6 months of USDC/USDT against a Stable Portfolio pool 
 - ``python3 Sim.py --CS`` runs an Ornstein-Uhlenbeck process centered at 1 against a Constant Sum pool
+- ``python3 Sim.py --OptimizedTest`` runs the USDC/USDT backtest data against the optimized parameter set for Stable Portfolio

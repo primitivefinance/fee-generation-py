@@ -208,7 +208,7 @@ def simulateBacktest_OptimizedC(env, Fees):
     Performs arbitrage at each simulation timestep between Stable Volatility and USDC/USDT price data from the Uniswap V3 subgraph and records the arbitrage fees.
     T must be 7/365 for this to work.
     '''
-    Curve = CFMM.StableVolatility(P0, K2, 0.002, T, gamma, env, shares)
+    Curve = CFMM.StableVolatility(P0, K2, 0.0005, T, gamma, env, shares)
 
     while True:
 
@@ -243,7 +243,7 @@ if run_GBM_simulation:
     data = {'Column1': sigma, 'Column2': avgIncomeGBM, 'Column3': stdIncomeGBM}
     df = pd.DataFrame(data)
 
-    output_directory = "output"
+    output_directory = "csv-data/GBM"
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
     output_file_name = f"GBMTest{M}Runs{G}IVs{sigma_low}to{sigma_high}.csv"
@@ -267,7 +267,7 @@ elif run_OU_simulation:
     data = {'Column1': sigma, 'Column2': avgIncomeOU, 'Column3': stdIncomeOU}
     df = pd.DataFrame(data)
 
-    output_directory = "output"
+    output_directory = "csv-data/OU"
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
     output_file_name = f"OUTest{M}Runs{G}IVs{sigma_low}to{sigma_high}.csv"
@@ -289,7 +289,7 @@ elif run_Backtest:
     data = {'Column1': sigma, 'Column2': IncomeBacktest}
     df = pd.DataFrame(data)
 
-    output_directory = "output"
+    output_directory = "csv-data/Backtest"
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
     output_file_name = f"USDCUSDT_Backtest{G}IVs{sigma_low}to{sigma_high}.csv"
