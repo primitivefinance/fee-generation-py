@@ -82,7 +82,7 @@ def GBMSimProcess(j):
         FeeIncome.append(sum(Fees))
     avgIncome = sum(FeeIncome)/M
     varIncome = sum([(fee - avgIncome)**2 for fee in FeeIncome])/M
-    print(f"{j}/{G} Complete")
+    print(f"{j/G*100} Complete")
     return avgIncome, varIncome
 
 ## Multithreaded execution against different implied volatility parameters
@@ -127,7 +127,7 @@ def OUSimProcess(j):
         FeeIncome.append(sum(Fees))
     avgIncome = sum(FeeIncome)/M
     varIncome = sum([(fee - avgIncome)**2 for fee in FeeIncome])/M
-    print(f"{j}/{G} Complete")
+    print(f"{j/G*100} Complete")
     return avgIncome, varIncome
 
 ## Multithreaded execution against different implied volatility parameters
@@ -168,7 +168,7 @@ def BacktestProcess(j):
     env.run(until=len(price.close_values))
 
     FeeIncome.append(sum(Fees))
-    print(f"{j}/{G} Complete")
+    print(f"{j/G*100} Complete")
     return sum(FeeIncome)
 
 ## Multithreaded execution against different implied volatility parameters
