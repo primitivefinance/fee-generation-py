@@ -157,10 +157,15 @@ def simulateBacktest(env, i, Fees):
         Fees.append(arb.Fees)
         yield env.timeout(1)
 
+feesOverTime = []
+timesteps = []
+
 def BacktestProcess(j):
     '''
     Runs a single simulation of the simulateBacktest process and returns the arbitrage fees earned.
     '''
+    # entrypoint for the sim
+    # j is an array of iv values
     FeeIncome = []
     Fees = []
     env = simpy.Environment()
@@ -168,8 +173,22 @@ def BacktestProcess(j):
     env.run(until=len(price.close_values))
 
     FeeIncome.append(sum(Fees))
+    current_sum = 0
+    count = 0
+
+    for el in Fees:
+        current_sum += el
+        feesOverTime.append(current_sum)
+
+    for el in feesOverTime:
+        timesteps.append(count)
+        count += 1
+
+
+
+
     print(f"{j/G*100} Complete")
-    return sum(FeeIncome)
+    return sum(FeeIncome) 
 
 ## Multithreaded execution against different implied volatility parameters
 
@@ -179,6 +198,8 @@ if run_Backtest:
         IncomeBacktest = list(executor.map(BacktestProcess, range(G)))
 
 # Constant Sum OU Test
+print(feesOverTime)
+print(timesteps)
 
 def simulateConstantSum(env):
     Curve = CFMM.ConstantSum(K2, shares/2, shares/2, gamma, env)
@@ -223,7 +244,6 @@ if run_Backtest_OptimizedC:
     env.process(simulateBacktest_OptimizedC(env, Fees))
     env.run(until=len(price.close_values))
     FeeIncome = sum(Fees)
-    print("Fees Earned:", FeeIncome)
 
 # Plotting and Data Export    
 
@@ -283,6 +303,13 @@ elif run_Backtest:
     plt.title(f"Strike {K2}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = 2.56% annualized, Backtest USDC/USDT", fontsize=10)
     plt.xlabel("Implied Volatility Parameter", fontsize=10)
     plt.ylabel("Expected Fees", fontsize=10)
+    plt.show()
+    plt.close()
+
+    plt.plot(timesteps, feesOverTime, color="#2BBA58")
+    plt.title(f"Strike {K2}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = 2.56% annualized, Backtest USDC/USDT", fontsize=10)
+    plt.xlabel("Timesteps", fontsize=10)
+    plt.ylabel("Fees Over Time", fontsize=10)
     plt.show()
     plt.close()
 
