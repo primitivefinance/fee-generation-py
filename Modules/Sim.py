@@ -113,6 +113,8 @@ def simulateOU(env, i, Fees):
         Fees.append(arb.Fees)
         yield env.timeout(1)
 
+feesOverTime = []
+timesteps = []
 def OUSimProcess(j):
     '''
     Runs M simulations of the simulateOU process and returns the average and variance of the arbitrage fees earned.
@@ -125,6 +127,15 @@ def OUSimProcess(j):
         env.run(until=N)
 
         FeeIncome.append(sum(Fees))
+    current_sum = 0
+    count = 0
+    for el in Fees:
+        current_sum += el
+        feesOverTime.append(current_sum)
+
+    for el in feesOverTime:
+        timesteps.append(count)
+        count += 1
     avgIncome = sum(FeeIncome)/M
     varIncome = sum([(fee - avgIncome)**2 for fee in FeeIncome])/M
     print(f"{j/G*100} Complete")
@@ -157,8 +168,6 @@ def simulateBacktest(env, i, Fees):
         Fees.append(arb.Fees)
         yield env.timeout(1)
 
-feesOverTime = []
-timesteps = []
 
 def BacktestProcess(j):
     '''
@@ -283,6 +292,14 @@ elif run_OU_simulation:
     plt.legend()
     plt.show()
     plt.close()
+
+    plt.plot(timesteps, feesOverTime, color="#2BBA58")
+    plt.title(f"Strike {K2}, Time Horizon = {T} years, Fee = {(1-gamma)*100}%, RV = 2.56% annualized, Backtest USDC/USDT", fontsize=10)
+    plt.xlabel("Timesteps", fontsize=10)
+    plt.ylabel("Fees Over Time", fontsize=10)
+    plt.show()
+    plt.close()
+
 
     data = {'Column1': sigma, 'Column2': avgIncomeOU, 'Column3': stdIncomeOU}
     df = pd.DataFrame(data)
